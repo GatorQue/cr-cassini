@@ -1,0 +1,30 @@
+#Mercurial Ignore Rules for Android
+#Save as .hgignore in the repository base directory and add it to source control.
+syntax: glob
+*.class
+*.apk
+*.dex
+*.ap_
+*.suo
+
+syntax: regexp
+^(.*[\\/])?gen[\\/].*
+^(.*[\\/])?obj[\\/].*
+^(.*[\\/])?log[\\/].*
+^(.*[\\/])?obf[\\/].*
+^(.*[\\/])?jars[\\/].*
+^(.*[\\/])?jar-sources[\\/].*
+^(.*[\\/])?javadoc[\\/].*
+^(.*[\\/])?assets[\\/].*
+^(.*[\\/])?build[\\/].*
+^(.*[\\/])?classes[\\/].*
+^(.*[\\/])?cassini[\\/]bin[\\/].*
+^(.*[\\/])?cassini-android[\\/]bin[\\/].*
+^(.*[\\/])?cassini-android[\\/]assets[\\/].*
+^(.*[\\/])?cassini-desktop[\\/]bin[\\/].*
+^(.*[\\/])?war[\\/]assets[\\/].*
+^(.*[\\/])?war[\\/]WEB-INF[\\/]classes[\\/].*
+^(.*[\\/])?war[\\/]WEB-INF[\\/]deploy[\\/].*
+^(.*[\\/])?gwt-unitCache[\\/].*
+^(.*[\\/])?\.metadata[\\/].*
+^(.*[\\/])?\.settings[\\/].*
