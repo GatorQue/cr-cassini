@@ -1,11 +1,10 @@
-package com.cosmicrover.cassini.utils;
+package com.cosmicrover.cassini;
 
 import com.artemis.Component;
 import com.artemis.Entity;
 import com.artemis.World;
 import com.artemis.utils.Bag;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.utils.Array;
@@ -13,12 +12,10 @@ import com.badlogic.gdx.utils.ArrayMap;
 import com.badlogic.gdx.utils.IntIntMap;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonValue;
-import com.cosmicrover.cassini.EntityFactory;
 import com.cosmicrover.cassini.managers.GroupManager;
 import com.cosmicrover.cassini.managers.OwnerManager;
 import com.cosmicrover.cassini.managers.PersistenceManager;
 import com.cosmicrover.cassini.managers.ViewportManager;
-import com.cosmicrover.cassini.screens.AssetLoadingScreen;
 import com.cosmicrover.cassini.screens.MainMenuScreen;
 import com.cosmicrover.cassini.screens.PlanetMapScreen;
 import com.cosmicrover.cassini.screens.OptionsScreen;
@@ -27,6 +24,8 @@ import com.cosmicrover.core.GameData;
 import com.cosmicrover.core.GameManager;
 import com.cosmicrover.core.components.AbstractComponent;
 import com.cosmicrover.core.screens.AbstractLoadingScreen;
+import com.cosmicrover.core.screens.AbstractScreen;
+import com.cosmicrover.core.screens.AssetLoadingScreen;
 
 public class WorldData extends GameData {
 	/// List of screenId values to be used by GameManager
@@ -61,7 +60,7 @@ public class WorldData extends GameData {
 	}
 
 	@Override
-	public Screen getInitialScreen() {
+	public AbstractScreen getInitialScreen() {
 		return screenManager.getScreen(ASSET_LOADING_SCREEN);
 	}
 
@@ -76,7 +75,7 @@ public class WorldData extends GameData {
 		this.gameManager = gameManager;
 		
 		// Add our TiledMap handler to our AssetManager
-		gameManager.getAssetManager().setLoader(TiledMap.class, new TmxMapLoader());
+		gameManager.getAssetManager().setLoader(TiledMap.class, ".tmx", new TmxMapLoader());
 
 		// Add our managers first
 		world.setManager(new GroupManager());
@@ -99,7 +98,7 @@ public class WorldData extends GameData {
 		//world.setSystem(new RemoveOffscreenShipsSystem(height));
 	
 		// Create our screens next
-		screenManager.registerScreen(ASSET_LOADING_SCREEN, new AssetLoadingScreen(gameManager));
+		screenManager.registerScreen(ASSET_LOADING_SCREEN, new AssetLoadingScreen(gameManager, 0.25f));
 		screenManager.registerScreen(MAIN_MENU_SCREEN, new MainMenuScreen(gameManager));
 		screenManager.registerScreen(OPTIONS_SCREEN, new OptionsScreen(gameManager, MAIN_MENU_SCREEN));
 		screenManager.registerScreen(PLANET_MAP_SCREEN, new PlanetMapScreen(gameManager, MAIN_MENU_SCREEN));
@@ -125,9 +124,9 @@ public class WorldData extends GameData {
 
 		// Create entities for a new game
     	entities.add(EntityFactory.createLocalPlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
+		entities.add(EntityFactory.createRemotePlayer(world));
+		entities.add(EntityFactory.createRemotePlayer(world));
+		entities.add(EntityFactory.createRemotePlayer(world));
 		//entities.add(EntityFactory.createRemotePlayer(world));
 		//entities.add(EntityFactory.createRemotePlayer(world));
 		//entities.add(EntityFactory.createRemotePlayer(world));

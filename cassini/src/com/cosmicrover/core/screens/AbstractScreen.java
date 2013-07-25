@@ -2,12 +2,15 @@ package com.cosmicrover.core.screens;
 
 import com.artemis.World;
 import com.badlogic.gdx.Screen;
+import com.cosmicrover.cassini.WorldData;
 import com.cosmicrover.cassini.managers.ViewportManager;
-import com.cosmicrover.cassini.utils.WorldData;
 import com.cosmicrover.core.GameData;
 import com.cosmicrover.core.GameManager;
 
 public class AbstractScreen implements Screen {
+	/// Name of this screen
+	protected final String screenName;
+	
 	/// Our GameDataService object to make game changes with
 	protected final GameManager gameManager;
 	
@@ -23,11 +26,12 @@ public class AbstractScreen implements Screen {
 	/// Which screen to switch to on Back button (default is to exit game)
 	private int backScreenId = GameData.EXIT_GAME_SCREEN;
 	
-	public AbstractScreen(GameManager gameManager) {
-		this(gameManager, GameData.EXIT_GAME_SCREEN);
+	public AbstractScreen(String screenName, GameManager gameManager) {
+		this(screenName, gameManager, GameData.EXIT_GAME_SCREEN);
 	}
 
-	public AbstractScreen(GameManager gameManager, int screenId) {
+	public AbstractScreen(String screenName, GameManager gameManager, int screenId) {
+		this.screenName = screenName;
 		this.gameManager = gameManager;
 		this.world = gameManager.getData(WorldData.class).getWorld();
 		firstTime = true;
@@ -35,6 +39,10 @@ public class AbstractScreen implements Screen {
 
 		// Attempt to retrieve the ViewportManager here
 		viewportManager = this.world.getManager(ViewportManager.class);
+	}
+	
+	public String getName() {
+		return screenName;
 	}
 	
 	protected boolean isFirstTime() {

@@ -1,7 +1,6 @@
 package com.cosmicrover.cassini;
 
 import com.badlogic.gdx.Game;
-import com.cosmicrover.cassini.utils.WorldData;
 import com.cosmicrover.core.GameEnvironment;
 import com.cosmicrover.core.GameManager;
 
@@ -21,7 +20,7 @@ public class CassiniGame extends Game {
 		// gameManager.getEnvironment().setJoysticks(joystickCount);
 
 		// Step 2: Initialize the game data
-		gameManager.initData(WorldData.class);
+		gameManager.initData(new WorldData());
 		
 		// Step 3: Set our first screen object and return to caller
 		setScreen(gameManager.getData().getInitialScreen());

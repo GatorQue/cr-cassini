@@ -2,12 +2,12 @@ package com.cosmicrover.cassini.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL10;
+import com.cosmicrover.cassini.WorldData;
 import com.cosmicrover.cassini.systems.RoverEventSystem;
 import com.cosmicrover.cassini.systems.RoverInputSystem;
 import com.cosmicrover.cassini.systems.EngineRenderSystem;
 import com.cosmicrover.cassini.systems.RoverRenderSystem;
 import com.cosmicrover.cassini.systems.MapSystem;
-import com.cosmicrover.cassini.utils.WorldData;
 import com.cosmicrover.core.GameManager;
 import com.cosmicrover.core.screens.AbstractLoadingScreen;
 import com.cosmicrover.core.screens.AbstractScreen;
@@ -21,7 +21,7 @@ public class PlanetMapScreen extends AbstractScreen {
 	private EngineRenderSystem engineRenderSystem = null;
 
 	public PlanetMapScreen(GameManager gameManager, int screenId) {
-		super(gameManager, screenId);
+		super("PlanetMapScreen", gameManager, screenId);
 
 		// Retrieve our passive MapSystem here
 		mapSystem = world.getSystem(MapSystem.class);
@@ -58,7 +58,11 @@ public class PlanetMapScreen extends AbstractScreen {
 		
 		// Switch to AssetDataLoadingScreen?
 		if(mapSystem.isLoadingRequired()) {
+			// Switch back to a full screen viewport
+			Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+			// Let our loading screen know which screen to switch back to
 			AbstractLoadingScreen.setNextScreenId(WorldData.PLANET_MAP_SCREEN);
+			// Switch to our Asset Loading Screen
 			gameManager.setScreen(WorldData.ASSET_LOADING_SCREEN);
 		}
 	}

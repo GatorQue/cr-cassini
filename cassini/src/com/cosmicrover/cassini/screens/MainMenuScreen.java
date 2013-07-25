@@ -32,7 +32,7 @@ public class MainMenuScreen extends AbstractScreen {
 	
 	
 	public MainMenuScreen(GameManager gameManager) {
-		super(gameManager);
+		super("MainMenuScreen", gameManager);
 		
 		// Note the creation of each screen in our debug log
 		Gdx.app.debug("MainMenuScreen", "Creating Main Menu screen");

@@ -1,4 +1,4 @@
-package com.cosmicrover.cassini.screens;
+package com.cosmicrover.core.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL10;
@@ -10,7 +10,6 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.cosmicrover.core.GameManager;
-import com.cosmicrover.core.screens.AbstractLoadingScreen;
 
 public class AssetLoadingScreen extends AbstractLoadingScreen {
 
@@ -36,11 +35,15 @@ public class AssetLoadingScreen extends AbstractLoadingScreen {
     private float startX, endX;
 
     public AssetLoadingScreen(GameManager gameManager) {
-		super(gameManager, DEFAULT_LAG_DELAY_S);
+		this(gameManager, DEFAULT_LAG_DELAY_S);
 	}
 
 	public AssetLoadingScreen(GameManager gameManager, float lagDelay_s) {
-		super(gameManager, lagDelay_s);
+		super("AssetLoadingScreen", gameManager, lagDelay_s);
+
+		// Load the assets we need for displaying the loading screen immediately
+		gameManager.getAssetManager().load("textures/loading.pack", TextureAtlas.class);
+        gameManager.getAssetManager().finishLoading();
 	}
 
 	@Override
@@ -78,12 +81,6 @@ public class AssetLoadingScreen extends AbstractLoadingScreen {
 	public void show() {
 		// Call our parent class implementation
 		super.show();
-
-		// Tell the manager to load assets for the loading screen
-		gameManager.getAssetManager().load("textures/loading.pack", TextureAtlas.class);
-
-        // Wait until they are finished loading
-        gameManager.getAssetManager().finishLoading();
 
         // Initialize the stage where we will place everything
         stage = new Stage();
@@ -156,9 +153,9 @@ public class AssetLoadingScreen extends AbstractLoadingScreen {
 
 	@Override
 	public void hide() {
-        // Dispose the loading assets as we no longer need them
-        gameManager.getAssetManager().unload("textures/loading.pack");
-        
+		// Remove our stage object
+		stage.dispose();
+		
         // Call our parent class implementation last
 		super.hide();
 	}

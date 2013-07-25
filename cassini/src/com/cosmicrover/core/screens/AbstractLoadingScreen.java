@@ -29,8 +29,8 @@ public abstract class AbstractLoadingScreen extends AbstractScreen {
 	 * user can see the 100% complete screen.
 	 * @param gameManager to use for switching screens
 	 */
-	public AbstractLoadingScreen(GameManager gameManager) {
-		this(gameManager, DEFAULT_LAG_DELAY_S);
+	public AbstractLoadingScreen(String screenName, GameManager gameManager) {
+		this(screenName, gameManager, DEFAULT_LAG_DELAY_S);
 	}
 
 	/**
@@ -44,8 +44,8 @@ public abstract class AbstractLoadingScreen extends AbstractScreen {
 	 * @param gameManager to use for switching screens
 	 * @param lagDelay_s in seconds to wait before switching screens
 	 */
-	public AbstractLoadingScreen(GameManager gameManager, float lagDelay_s) {
-		super(gameManager);
+	public AbstractLoadingScreen(String screenName, GameManager gameManager, float lagDelay_s) {
+		super(screenName, gameManager);
 
 		// Lag delay after loading completes to wait before switching to next screen
 		this.lagDelay_s = lagDelay_s;
@@ -61,7 +61,7 @@ public abstract class AbstractLoadingScreen extends AbstractScreen {
 	 * @param screenId to switch to after data is loaded (defaults to exit)
 	 */
 	public static final void setNextScreenId(int screenId) {
-		Gdx.app.log("AbstractLoadingScreen", "Setting next screenId="+screenId);
+		Gdx.app.debug("AbstractLoadingScreen", "Setting next screenId="+screenId);
 		nextScreenId = screenId;
 	}
 

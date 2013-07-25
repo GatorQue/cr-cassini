@@ -29,7 +29,7 @@ public class OptionsScreen extends AbstractScreen {
 	private TextButton backButton = null;
 
 	public OptionsScreen(GameManager gameManager, int screenId) {
-		super(gameManager, screenId);
+		super("OptionsScreen", gameManager, screenId);
 		
 		// Note the creation of each screen in our debug log
 		Gdx.app.debug("SettingsScreen", "Creating Options screen");

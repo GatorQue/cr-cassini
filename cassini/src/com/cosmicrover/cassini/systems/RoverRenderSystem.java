@@ -80,7 +80,7 @@ public class RoverRenderSystem extends EntityProcessingSystem {
 		// Create a hash map for looking up texture regions by string name found in SpriteComponent
 		regions = new HashMap<String, AtlasRegion>();
 		textureAtlas = new TextureAtlas(
-				Gdx.files.internal("textures/sprite_pack"),
+				Gdx.files.internal("textures/sprite_rover.pack"),
 				Gdx.files.internal("textures"));
 		for (AtlasRegion region : textureAtlas.getRegions()) {
 			regions.put(region.name, region);

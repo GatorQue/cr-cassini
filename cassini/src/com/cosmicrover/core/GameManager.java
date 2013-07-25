@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.Base64Coder;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.Json;
 import com.cosmicrover.core.GameEnvironment.Platform;
+import com.cosmicrover.core.screens.AbstractScreen;
 
 public class GameManager implements Disposable {
 	public static final String DATA_DIRECTORY = ".cosmicrover/";
@@ -116,9 +117,12 @@ public class GameManager implements Disposable {
         	Gdx.app.log( "GameManager:setScreen()", "Exit application requested");
     		Gdx.app.exit();
     	} else {
-    		// Log the change of screens and change screens
-        	Gdx.app.log( "GameManager:setScreen()", "Changing to screenId="+screenId);
-    		game.setScreen(gameData.getScreen(screenId));
+    		// Retrieve our AbstractScreen base class for the screenId provided
+    		AbstractScreen anScreen = gameData.getScreen(screenId);
+    		game.setScreen(anScreen);
+
+    		// Log the change of screens event
+        	Gdx.app.log( "GameManager:setScreen()", "Changing to " + anScreen.getName() + "(" + screenId + ")");
     	}
     }
     
@@ -205,53 +209,35 @@ public class GameManager implements Disposable {
      * @param[in] type of GameData derived class to create
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	public final <T extends GameData> void initData(Class<T> type) {
-	    // if the game data is already loaded, just return it
-        if( gameData == null ) {
-        	// Log the creation of the GameData derived class
-        	Gdx.app.log( "GameManager:initData("+type.getName()+")", "Creating GameData object...");
+	public final void initData(GameData gameData) {
+    	if( this.gameData != null ) {
+    		Gdx.app.error("GameManager:init", "GameData object already exists, replacing.");
+    	}
+    	// Update our GameData object
+    	this.gameData = gameData;
 
-        	// Attempt to create a new instance of gameDataType
-        	try {
-        		// Create an instance of the class type specified
-    			gameData = type.newInstance();
-    			
-    			// Do we need a back button handler?
-            	if(Platform.Android == gameEnvironment.getPlatform() ||
-            	   Platform.iOS == gameEnvironment.getPlatform()) {
-            		// Create our Back button handler
-            		backButtonHandler = new BackButtonHandler(this);
-            		
-            		// Register our handler with our InputMultiplexer
-            		inputMultiplexer.addProcessor(backButtonHandler);
+		// Do we need a back button handler?
+    	if(Platform.Android == gameEnvironment.getPlatform() ||
+    	   Platform.iOS == gameEnvironment.getPlatform()) {
+    		// Create our Back button handler
+    		backButtonHandler = new BackButtonHandler(this);
+    		
+    		// Register our handler with our InputMultiplexer
+    		inputMultiplexer.addProcessor(backButtonHandler);
 
-            		// Make sure we catch the Back key (Android/iOS) input events
-            		Gdx.app.getInput().setCatchBackKey(true);
-            	}
+    		// Make sure we catch the Back key (Android/iOS) input events
+    		Gdx.app.getInput().setCatchBackKey(true);
+    	}
             	
-    			// Call the init method on this new instance
-    			gameData.init(this);
+		// Call the init method on this new instance
+		gameData.init(this);
     			
-    			// Add ourselves as a handler for the GameData class
-    			assetManager.setLoader(type, new GameDataLoader<T>());
+		// Add ourselves as a handler for the GameData class
+		assetManager.setLoader(GameData.class, new GameDataLoader<GameData>());
 
-    			// Add the data to our assetMaanger to load next
-    	    	assetManager.load(DATA_DIRECTORY+dataFilename, type,
-    	    			new GameDataLoader.Parameters(gameData));
-    		} catch (InstantiationException ie) {
-    			// Log the exception
-            	Gdx.app.error( "GameManager:initData(" + type.getName() + ")",
-            			"Unable to create game data object", ie);
-    		} catch (IllegalAccessException iae) {
-    			// Log the exception
-            	Gdx.app.error( "GameManager:initData(" + type.getName() + ")",
-            			"Unable to create game data object", iae);
-    		}
-        } else {
-			// Log the exception
-        	Gdx.app.error( "GameManager:initData(" + type.getName() + ")",
-        			"Called twice");
-        }
+		// Add the data to our assetMaanger to load next
+    	assetManager.load(DATA_DIRECTORY+dataFilename, GameData.class,
+    			new GameDataLoader.Parameters(gameData));
 
         // Make our inputMultiplexer the primary input listener
 	    Gdx.input.setInputProcessor(this.inputMultiplexer);

@@ -1,7 +1,7 @@
 package com.cosmicrover.core;
 
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.utils.Json.Serializable;
+import com.cosmicrover.core.screens.AbstractScreen;
 
 public abstract class GameData implements Serializable {
 	/// Special screen ID indicating that the program should exit
@@ -55,7 +55,7 @@ public abstract class GameData implements Serializable {
 	 * after the initGame and restoreGame methods have been called above.
 	 * @return a AbstractScreen derived class to be displayed first
 	 */
-	public abstract Screen getInitialScreen();
+	public abstract AbstractScreen getInitialScreen();
 	
 	/**
 	 * Retrieve the screenId for the settings screen (or EXIT_GAME_SCREEN if
@@ -70,7 +70,7 @@ public abstract class GameData implements Serializable {
 	 * @param screen to find screenId value for
 	 * @return the screenId found or 0 if Screen wasn't found.
 	 */
-	public final int getScreenId(Screen screen) {
+	public final int getScreenId(AbstractScreen screen) {
 		return screenManager.getScreenId(screen);
 	}
 
@@ -79,7 +79,7 @@ public abstract class GameData implements Serializable {
 	 * @param screenId to use to retrieve the Screen object
 	 * @return the Screen object associated with screenId or null if not found.
 	 */
-	public final Screen getScreen(int screenId) {
+	public final AbstractScreen getScreen(int screenId) {
 		return screenManager.getScreen(screenId);
 	}
 	

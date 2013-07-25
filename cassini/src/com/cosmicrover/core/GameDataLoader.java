@@ -14,13 +14,6 @@ import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;
 
 public class GameDataLoader<T extends GameData> extends AsynchronousAssetLoader<T, GameDataLoader.Parameters<T>> {
-	public static class Parameters<T extends GameData> extends AssetLoaderParameters<T> {
-		private T gameData = null;
-		public Parameters(T gameData) {
-			this.gameData = gameData;
-		}
-	}
-
 	public GameDataLoader() {
 		super(new ExternalFileHandleResolver());
 	}
@@ -102,5 +95,12 @@ public class GameDataLoader<T extends GameData> extends AsynchronousAssetLoader<
 //			throw new GdxRuntimeException("Couldn't load tilemap '" + fileName + "'", e);
 //		}
 		return null;
+	}
+
+	public static class Parameters<T extends GameData> extends AssetLoaderParameters<T> {
+		private T gameData = null;
+		public Parameters(T gameData) {
+			this.gameData = gameData;
+		}
 	}
 }
