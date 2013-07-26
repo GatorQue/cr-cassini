@@ -7,8 +7,11 @@ import com.artemis.annotations.Mapper;
 import com.artemis.systems.EntityProcessingSystem;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.utils.Array;
 import com.cosmicrover.cassini.EntityFactory;
+import com.cosmicrover.cassini.WorldData;
 import com.cosmicrover.cassini.components.LocationComponent;
 import com.cosmicrover.cassini.components.MapComponent;
 import com.cosmicrover.core.GameManager;
@@ -17,8 +20,14 @@ public class MapSystem extends EntityProcessingSystem {
 	@Mapper ComponentMapper<LocationComponent> locationMapper;
 	@Mapper ComponentMapper<MapComponent> mapMapper;
 
+	/// Layer properties that might exist
+	private static final String LAYER_PROPERTY_ITEMS      = "items";
+	private static final String LAYER_PROPERTY_FOREGROUND = "foreground";
+	
 	// The GameManager object to use to retrieve various resources
 	private final GameManager gameManager;
+	
+	private final WorldData worldData;
 
 	// Indicates the parent screen needs to show a loading screen
 	private boolean loadingRequired = false;
@@ -27,6 +36,9 @@ public class MapSystem extends EntityProcessingSystem {
 	public MapSystem(GameManager gameManager) {
 		super(Aspect.getAspectForAll(LocationComponent.class, MapComponent.class));
 		this.gameManager = gameManager;
+
+		// Retrieve a copy of our WorldData object from our GameManager
+		worldData = gameManager.getData(WorldData.class); 
 	}
 	
 	public boolean isLoadingRequired() {
@@ -70,56 +82,88 @@ public class MapSystem extends EntityProcessingSystem {
 				location.setLevelGrid(map.mapTileWidth, map.mapTileHeight);
 				location.setMapBounds(0,0,map.mapWidth, map.mapHeight);
 				location.setMapName(map.mapFilename);
+				
+				// TODO: Determine the correct location to be on the map (load base?)
 
 				// Call our GetLayers method to determine which layers are foreground layers and background layers
-				GetLayerTypes(map, map.tiledMap);
+				getLayerTypes(map);
 				
+				// Create world entities for this map the first time its loaded
+				createWorldMapEntities(map, location);
+
 				// Create player specific entities for this map for this player
-				CreateMapEntities(theEntity);
+				createPlayerMapEntities(map, location, theEntity.getUuid().toString());
 			}
 		}
 	}
 
-	private void CreateMapEntities(Entity theEntity) {
-		MapComponent map = mapMapper.get(theEntity);
-		LocationComponent location = locationMapper.get(theEntity);
+	private void createWorldMapEntities(MapComponent map, LocationComponent location) {
+		// Only create world entities for this map if this is the first time we have seen the map
+		if(!worldData.mapsLoaded.contains(map.mapFilename, false)) {
+			// TODO: Loop through each layer looking for items property
+			for(MapLayer mapLayer : map.tiledMap.getLayers()) {
+				// Look for layers with the "items" property and add the items found on them
+				if("true".equalsIgnoreCase(mapLayer.getProperties().get(LAYER_PROPERTY_ITEMS, String.class)) ) {
+					createWorldMapItems(mapLayer, location);
+				}
+			}
+			
+			// Add this map to the list of maps loaded
+			worldData.mapsLoaded.add(map.mapFilename);
+		}
+	}
+	
+	private void createWorldMapItems(MapLayer mapLayer, LocationComponent location) {
+		TiledMapTileLayer tiledMapLayer = TiledMapTileLayer.class.cast(mapLayer);
+		for(int y=0; y<tiledMapLayer.getHeight(); y++) {
+			for(int x=0; x<tiledMapLayer.getWidth(); x++) {
+				Cell cell = tiledMapLayer.getCell(x, y);
+				if(cell != null) {
+					// Create a LocationComponent for this tile as a clone from the entity Location provided
+					LocationComponent locationItem = new LocationComponent(location, x, y);
+					// Now create the Entity for this item and add it to the world immediately
+					EntityFactory.createMapItem(world, locationItem, cell.getTile()).addToWorld();
+				}
+			}
+		}
+	}
 
+	private void createPlayerMapEntities(MapComponent map, LocationComponent location, String uuid) {
 		// Have we done this before for this player? then add player specific entities now
 		if(!map.mapsLoaded.contains(map.mapFilename, false)) {
 			// Create map mask entities for each map location to hide each square
 			for(int row=0; row<map.mapHeight; row++) {
 				for(int col=0; col<map.mapWidth; col++) {
-					// FIXME: Replace this with starting position obtained from map properties
-					// Is this our starting position? then skip creating a mask for it
-					if(col==0 && row == 0) {
+					// Skip the location of where we are now on the new map
+					if(col == location.getMapX() && row == location.getMapY()) {
 						continue;
 					}
-					LocationComponent locationMask = new LocationComponent(location);
-					locationMask.setMap(col,row);
-					EntityFactory.createMapMask(world, locationMask, theEntity.getUuid().toString()).addToWorld();
+					// Create a mask entity for this location
+					LocationComponent locationMask = new LocationComponent(location, col, row);
+					EntityFactory.createMapMask(world, locationMask, uuid).addToWorld();
 				}
 			}
 			
-			// Add this entities UUID to our list of created map entities
+			// Add this mapFilename to our list of maps loaded for this entity
 			map.mapsLoaded.add(map.mapFilename);
 		}
 	}
-
+	
 	/**
 	 * This method will determine which layers are background and which layers
 	 * are foreground layers based on the foreground property being set to the
 	 * value of "true". Once determined, the caller can retrieve these integer
 	 * arrays and use them as part of the rendering of the map.
 	 */
-	private void GetLayerTypes(MapComponent map, TiledMap theTiledMap) {
-		int layerCount = theTiledMap.getLayers().getCount();
+	private void getLayerTypes(MapComponent map) {
+		int layerCount = map.tiledMap.getLayers().getCount();
 		Array<Integer> aBackground = new Array<Integer>();
 		Array<Integer> aForeground = new Array<Integer>();
 		
 		for(int iLayer=0; iLayer<layerCount; iLayer++) {
-			MapLayer layer = theTiledMap.getLayers().get(iLayer);
+			MapLayer layer = map.tiledMap.getLayers().get(iLayer);
 			// Is foreground property set to "true" for this layer?
-			if("true".equalsIgnoreCase(layer.getProperties().get("foreground", String.class))) {
+			if("true".equalsIgnoreCase(layer.getProperties().get(LAYER_PROPERTY_FOREGROUND, String.class))) {
 				// Add iLayer to foreground layer list
 				aForeground.add(iLayer);
 			} else {

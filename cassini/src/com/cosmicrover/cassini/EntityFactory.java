@@ -2,9 +2,11 @@ package com.cosmicrover.cassini;
 
 import com.artemis.Entity;
 import com.artemis.World;
+import com.badlogic.gdx.maps.tiled.TiledMapTile;
 import com.cosmicrover.cassini.components.CameraComponent;
 import com.cosmicrover.cassini.components.GroupComponent;
 import com.cosmicrover.cassini.components.OwnerComponent;
+import com.cosmicrover.cassini.components.PropertyComponent;
 import com.cosmicrover.cassini.components.RoverEventComponent;
 import com.cosmicrover.cassini.components.RoverInputComponent;
 import com.cosmicrover.cassini.components.LocationComponent;
@@ -69,7 +71,6 @@ public class EntityFactory {
 		
 		// Create and add a Sprite component for the player next
 		SpriteComponent sprite = new SpriteComponent();
-		sprite.name = SpriteConstants.ROVER_NORTH;
 		anEntity.addComponent(sprite);
 		
 		// Create the camera component using the world and hud cameras above
@@ -121,35 +122,25 @@ public class EntityFactory {
 		return anEntity;
 	}
 	
-	public static Entity createBase(World world, float x, float y) {
-		// Create a new Entity for this rover base
-		Entity anEntity = world.createEntity();
-		
-		// Create and add a Position2D component for the rover first
-		LocationComponent location = new LocationComponent();
-		location.setLevel(x, y);
-		anEntity.addComponent(location);
-		
-		// Return the Entity created above
-		return anEntity;
-	}
-	
-	public static Entity createItem(World world) {
+	public static Entity createMapItem(World world, LocationComponent location, TiledMapTile tiledMapTile) {
 		// Create a new Entity for this rover
 		Entity anEntity = world.createEntity();
-		
-		// Create and add a Position2D component for the rover first
-		LocationComponent location = new LocationComponent();
+
+		// Add the location component provided to this entity
 		anEntity.addComponent(location);
 		
 		// Create and add a Sprite component for the item next
-		SpriteComponent sprite = new SpriteComponent();
+		SpriteComponent sprite = new SpriteComponent(tiledMapTile.getTextureRegion());
 		anEntity.addComponent(sprite);
 		
 		// Add Group component to keep track of this entity as a batch
 		GroupComponent group = new GroupComponent();
 		group.add(SPRITE_GROUP);
 		anEntity.addComponent(group);
+		
+		// Add Property component for this item
+		PropertyComponent property = new PropertyComponent(tiledMapTile);
+		anEntity.addComponent(property);
 		
 		return anEntity;
 	}

@@ -1,10 +1,15 @@
 package com.cosmicrover.cassini;
 
+import java.util.HashMap;
+
 import com.artemis.Component;
 import com.artemis.Entity;
 import com.artemis.World;
 import com.artemis.utils.Bag;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas.AtlasRegion;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.utils.Array;
@@ -46,6 +51,15 @@ public class WorldData extends GameData {
 	/// An array of entities to be added to our World object during restoreGame() 
 	private final Array<Entity> entities;
 
+	/// An array of maps that have been loaded for all players
+	public final Array<String> mapsLoaded;
+	
+	// Maps region name to AtlasRegion information to texture
+	private HashMap<String, AtlasRegion> spriteRegions;
+
+	// TextureAtlas that can carve up the sprite texture to show the correct texture
+	private TextureAtlas spriteTextureAtlas;
+
 	/**
 	 * Only the default constructor is allowed for deriving from GameData. This
 	 * is the default constructor.
@@ -53,6 +67,7 @@ public class WorldData extends GameData {
 	public WorldData() {
 		world = new World();
 		entities = new Array<Entity>();
+		mapsLoaded = new Array<String>();
 	}
 	
 	public World getWorld() {
@@ -77,6 +92,17 @@ public class WorldData extends GameData {
 		// Add our TiledMap handler to our AssetManager
 		gameManager.getAssetManager().setLoader(TiledMap.class, ".tmx", new TmxMapLoader());
 
+		gameManager.getAssetManager().load("textures/sprite_rover.pack", TextureAtlas.class);
+		
+		// Create a hash map for looking up texture regions by string name found in SpriteComponent
+		spriteRegions = new HashMap<String, AtlasRegion>();
+		spriteTextureAtlas = new TextureAtlas(
+				Gdx.files.internal("textures/sprite_rover.pack"),
+				Gdx.files.internal("textures"));
+		for (AtlasRegion region : spriteTextureAtlas.getRegions()) {
+			spriteRegions.put(region.name, region);
+		}
+		
 		// Add our managers first
 		world.setManager(new GroupManager());
 		world.setManager(new OwnerManager());
@@ -119,14 +145,17 @@ public class WorldData extends GameData {
 		// Clear any existing entities from the world first
 		world.getManager(PersistenceManager.class).removeAll();
 		
+		// Make sure our list of maps loaded is clear
+		mapsLoaded.clear();
+		
 		// Make sure our list of entities to be restored is clear
 		entities.clear();
 
 		// Create entities for a new game
     	entities.add(EntityFactory.createLocalPlayer(world));
-		entities.add(EntityFactory.createRemotePlayer(world));
-		entities.add(EntityFactory.createRemotePlayer(world));
-		entities.add(EntityFactory.createRemotePlayer(world));
+		//entities.add(EntityFactory.createRemotePlayer(world));
+		//entities.add(EntityFactory.createRemotePlayer(world));
+		//entities.add(EntityFactory.createRemotePlayer(world));
 		//entities.add(EntityFactory.createRemotePlayer(world));
 		//entities.add(EntityFactory.createRemotePlayer(world));
 		//entities.add(EntityFactory.createRemotePlayer(world));
@@ -190,6 +219,10 @@ public class WorldData extends GameData {
 		world.setDelta(0.0f);
 		world.process();
 	}
+	
+	public TextureRegion getTexture(String name) {
+		return spriteRegions.get(name);
+	}
 
 	@Override
 	public void write(Json json) {
@@ -198,8 +231,9 @@ public class WorldData extends GameData {
 		
 		// TODO: Add other fields as needed.
 		writeEntities(json);
+		writeMapsLoaded(json);
 	}
-
+	
 	private void writeEntities(Json json) {
     	PersistenceManager anPersistenceManager = world.getManager(PersistenceManager.class);
     	Entity[] anEntities = anPersistenceManager.getEntities();
@@ -232,6 +266,17 @@ public class WorldData extends GameData {
 		json.writeArrayEnd();
 	}
 
+	private void writeMapsLoaded(Json json) {
+		json.writeArrayStart("MapsLoaded");
+		for(int i = 0, iSize = mapsLoaded.size; iSize > i; i++) {
+			String mapFilename = mapsLoaded.get(i);
+			json.writeObjectStart();
+			json.writeValue("mapFilename", mapFilename);
+			json.writeObjectEnd();
+		}
+		json.writeArrayEnd();
+	}
+	
 	@Override
 	public void read(Json json, JsonValue jsonData) {
 		// Read the data format version number first
@@ -246,6 +291,12 @@ public class WorldData extends GameData {
 		JsonValue jsonEntities = jsonData.get("Entities");
 		if(jsonEntities != null) {
 			readEntities(formatVersion, json, jsonEntities);
+		}
+		
+		// Attempt to read our array of maps loaded from our data file
+		JsonValue jsonMapsLoaded = jsonData.get("MapsLoaded");
+		if(jsonMapsLoaded != null) {
+			readMapsLoaded(formatVersion, json, jsonMapsLoaded);
 		}
 	}
 	
@@ -303,6 +354,7 @@ public class WorldData extends GameData {
 
 			// Attempt to create and add the component to theEntity provided
 			try {
+				//System.out.println("readComponent:" + jsonComponent.child().name());
 				// Something bad is likely to happen here
 				Class<?> componentType = Class.forName(jsonComponent.child().name());
 				AbstractComponent abstractComponent = AbstractComponent.class.cast(componentType.newInstance());
@@ -326,4 +378,13 @@ public class WorldData extends GameData {
 		} // for(int i=0, iSize = jsonData.size; iSize > i; i++)
 	}
 
+	private void readMapsLoaded(int formatVersion, Json json, JsonValue jsonData) {
+		// Loop through each entity recorded and create them
+		for(int i=0, iSize = jsonData.size; iSize > i; i++) {
+			// Loop through and read each map filename into our mapsLoaded array
+			JsonValue jsonEntity = jsonData.get(i);
+			String mapFilename = json.readValue("mapFilename", String.class, jsonEntity);
+			mapsLoaded.add(mapFilename);
+		} // for(int i=0, s=jsonEntities.size; i<s; i++)
+	}
 }

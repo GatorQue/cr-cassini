@@ -1,7 +1,5 @@
 package com.cosmicrover.cassini.systems;
 
-import java.util.HashMap;
-
 import com.artemis.Aspect;
 import com.artemis.ComponentMapper;
 import com.artemis.Entity;
@@ -10,8 +8,6 @@ import com.artemis.systems.EntityProcessingSystem;
 import com.artemis.utils.ImmutableBag;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas.AtlasRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
@@ -21,6 +17,7 @@ import com.cosmicrover.cassini.EntityFactory;
 import com.cosmicrover.cassini.components.CameraComponent;
 import com.cosmicrover.cassini.components.LocationComponent;
 import com.cosmicrover.cassini.components.MapComponent;
+import com.cosmicrover.cassini.components.PropertyComponent;
 import com.cosmicrover.cassini.components.RoverEventComponent;
 import com.cosmicrover.cassini.components.SpriteComponent;
 import com.cosmicrover.cassini.components.ViewportComponent;
@@ -32,17 +29,12 @@ public class RoverRenderSystem extends EntityProcessingSystem {
 	@Mapper	ComponentMapper<LocationComponent> locationMapper;
 	@Mapper ComponentMapper<SpriteComponent> spriteMapper;
 	@Mapper ComponentMapper<MapComponent> mapMapper;
+	@Mapper ComponentMapper<PropertyComponent> propertyMapper;
 	@Mapper ComponentMapper<RoverEventComponent> roverEventMapper;
     @Mapper ComponentMapper<ViewportComponent> viewportMapper;
 
 	// Radius to use for movement path
 	private static final int PATH_RADIUS = 2;
-
-	// Maps region name to AtlasRegion information to texture
-	private HashMap<String, AtlasRegion> regions;
-
-	// TextureAtlas that can carve up the sprite texture to show the correct texture
-	private TextureAtlas textureAtlas;
 
 	// GameManager class for retrieving various game wide resources
 	private final GameManager gameManager;
@@ -77,15 +69,6 @@ public class RoverRenderSystem extends EntityProcessingSystem {
 
 	@Override
 	protected void initialize() {
-		// Create a hash map for looking up texture regions by string name found in SpriteComponent
-		regions = new HashMap<String, AtlasRegion>();
-		textureAtlas = new TextureAtlas(
-				Gdx.files.internal("textures/sprite_rover.pack"),
-				Gdx.files.internal("textures"));
-		for (AtlasRegion region : textureAtlas.getRegions()) {
-			regions.put(region.name, region);
-		}
-		
 		// Retrieve the GroupManager object now
 		groupManager = world.getManager(GroupManager.class);
 	}
@@ -118,32 +101,42 @@ public class RoverRenderSystem extends EntityProcessingSystem {
 			mapRenderer.setView(camera.getWorldCamera());
 			mapRenderer.render(map.mapBackgroundLayers);
 	
-			// Render the sprites retrieved earlier on the map
+			// Set our world camera for drawing our sprites on the map
+			spriteBatch.setProjectionMatrix(camera.getWorldCamera().combined);
+			spriteBatch.begin();
 			for(int i = 0, s = sprites.size(); s > i; i++) {
 				// Retrieve the Entity by index
 				Entity anEntity = sprites.get(i);
+
+				// Retrieve the location component
+				LocationComponent spriteLocation = locationMapper.get(anEntity);
 				
-				// Retrieve the position and sprite components for this sprite
-				SpriteComponent sprite = spriteMapper.get(anEntity);
-	
-				// Confirm that there is a sprite name to lookup
-				if(sprite.name != null) {
-					// Retrieve the position information now
-					LocationComponent spriteLocation = locationMapper.get(anEntity);
-	
-					// Retrieve the spriteRegion using the string name as the key
-					AtlasRegion spriteRegion = regions.get(sprite.name);
-			        
-					// Set our world camera
-					spriteBatch.setProjectionMatrix(camera.getWorldCamera().combined);
-					spriteBatch.begin();
+				// Does our spriteLocation's map match this entities location map? then render it now
+				if(location.getMapName().equals(spriteLocation.getMapName())) {
+					// Retrieve the components for this sprite
+					SpriteComponent sprite = spriteMapper.get(anEntity);
+				
+					// Maybe the textureRegion comes from our map
+					if(sprite.textureRegion == null) {
+						PropertyComponent property = propertyMapper.getSafe(anEntity);
+						if(property != null) {
+							sprite.textureRegion = map.tiledMap.getTileSets().getTile(property.tileId).getTextureRegion();
+						} else {
+							Gdx.app.error("RoverRenderSystem:process", "Null texture region");
+							// Skip this sprite and move on
+							continue;
+						}
+					}
+					
+					// Skip this sprite if it doesn't match the map we are showing now
+					// Set the tint color for this sprite
 					spriteBatch.setColor(sprite.tint);
-					spriteBatch.draw(spriteRegion, spriteLocation.getLevel().x, spriteLocation.getLevel().y);
-					spriteBatch.end();
+					spriteBatch.draw(sprite.textureRegion, spriteLocation.getLevel().x, spriteLocation.getLevel().y);
 				}
 			}
+			spriteBatch.end();
 			
-			// Render the forground tiles
+			// Render the foreground tiles
 			mapRenderer.setView(camera.getWorldCamera());
 			mapRenderer.render(map.mapForegroundLayers);
 			

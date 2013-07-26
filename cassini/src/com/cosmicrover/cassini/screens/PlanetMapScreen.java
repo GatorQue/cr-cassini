@@ -28,9 +28,8 @@ public class PlanetMapScreen extends AbstractScreen {
 
 		// Create passive systems for any systems specific to this Screen 
 		roverInputSystem = world.setSystem(new RoverInputSystem(), true);
-		eventQueueSystem = world.setSystem(new RoverEventSystem(), true);
+		eventQueueSystem = world.setSystem(new RoverEventSystem(gameManager), true);
 		roverRenderSystem = world.setSystem(new RoverRenderSystem(gameManager), true);
-		//healthRenderSystem = world.setSystem(new HealthRenderSystem(screenWidth, screenHeight));
 		engineRenderSystem = world.setSystem(new EngineRenderSystem(gameManager.getSpriteBatch()), true);
 		
 		// Note the creation of each screen in our debug log

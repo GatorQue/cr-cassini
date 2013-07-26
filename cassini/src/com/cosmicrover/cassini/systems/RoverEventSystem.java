@@ -9,11 +9,13 @@ import com.artemis.utils.ImmutableBag;
 import com.badlogic.gdx.math.MathUtils;
 import com.cosmicrover.cassini.EntityFactory;
 import com.cosmicrover.cassini.SpriteConstants;
+import com.cosmicrover.cassini.WorldData;
 import com.cosmicrover.cassini.components.RoverEventComponent;
 import com.cosmicrover.cassini.components.RoverEventComponent.RoverEvent;
 import com.cosmicrover.cassini.components.LocationComponent;
 import com.cosmicrover.cassini.components.SpriteComponent;
 import com.cosmicrover.cassini.managers.GroupManager;
+import com.cosmicrover.core.GameManager;
 
 public class RoverEventSystem extends IntervalEntityProcessingSystem {
 	@Mapper ComponentMapper<RoverEventComponent> roverEventMapper;
@@ -23,16 +25,20 @@ public class RoverEventSystem extends IntervalEntityProcessingSystem {
 	// EventQueueSystem interval for processing Events
 	public static final float EVENT_PROCESSING_INTERVAL = 1.0f / 25.0f; // 25 Hz
 	
+	// Retrieve the WorldData object for obtaining TextureRegions for our sprites
+	private final WorldData worldData;
+	
 	// GroupManager which is used to retrieve the sprites to draw
 	private GroupManager groupManager = null;
 
 	@SuppressWarnings("unchecked")
-	public RoverEventSystem() {
+	public RoverEventSystem(GameManager gameManager) {
 		super(Aspect.getAspectForAll(
 				RoverEventComponent.class,
 				LocationComponent.class,
 				SpriteComponent.class),
 			  EVENT_PROCESSING_INTERVAL);
+		this.worldData = gameManager.getData(WorldData.class);
 	}
 	
 	@Override
@@ -46,6 +52,11 @@ public class RoverEventSystem extends IntervalEntityProcessingSystem {
 		RoverEventComponent roverEvent = roverEventMapper.get(theEntity);
 		LocationComponent location = locationMapper.get(theEntity);
 		SpriteComponent sprite = spriteMapper.get(theEntity);
+
+		// Are we missing our TextureRegion? then retrieve it now
+		if(sprite.textureRegion == null) {
+			ChangeSprite(sprite, roverEvent.direction);
+		}
 		
 		// Subtract from nextEvent counter if currently enabled
 		if(roverEvent.nextEvent > 0) {
@@ -183,28 +194,28 @@ public class RoverEventSystem extends IntervalEntityProcessingSystem {
 	private void ChangeSprite(SpriteComponent sprite, int direction) {
 		switch(direction) {
 		case RoverEvent.DIR_N:
-			sprite.name = SpriteConstants.ROVER_NORTH;
+			sprite.textureRegion = worldData.getTexture(SpriteConstants.ROVER_NORTH);
 			break;
 		case RoverEvent.DIR_E:
-			sprite.name = SpriteConstants.ROVER_EAST;
+			sprite.textureRegion = worldData.getTexture(SpriteConstants.ROVER_EAST);
 			break;
 		case RoverEvent.DIR_W:
-			sprite.name = SpriteConstants.ROVER_WEST;
+			sprite.textureRegion = worldData.getTexture(SpriteConstants.ROVER_WEST);
 			break;
 		case RoverEvent.DIR_S:
-			sprite.name = SpriteConstants.ROVER_SOUTH;
+			sprite.textureRegion = worldData.getTexture(SpriteConstants.ROVER_SOUTH);
 			break;
 		case RoverEvent.DIR_NE:
-			sprite.name = SpriteConstants.ROVER_NORTH_EAST;
+			sprite.textureRegion = worldData.getTexture(SpriteConstants.ROVER_NORTH_EAST);
 			break;
 		case RoverEvent.DIR_SE:
-			sprite.name = SpriteConstants.ROVER_SOUTH_EAST;
+			sprite.textureRegion = worldData.getTexture(SpriteConstants.ROVER_SOUTH_EAST);
 			break;
 		case RoverEvent.DIR_NW:
-			sprite.name = SpriteConstants.ROVER_NORTH_WEST;
+			sprite.textureRegion = worldData.getTexture(SpriteConstants.ROVER_NORTH_WEST);
 			break;
 		case RoverEvent.DIR_SW:
-			sprite.name = SpriteConstants.ROVER_SOUTH_WEST;
+			sprite.textureRegion = worldData.getTexture(SpriteConstants.ROVER_SOUTH_WEST);
 			break;
 		}
 	}

@@ -26,12 +26,12 @@ public class LocationComponent extends AbstractComponent {
 		levelOffsetCenter = new Vector2(0.5f,0.5f);
 	}
 	
-	public LocationComponent(LocationComponent clone) {
+	public LocationComponent(LocationComponent clone, int x, int y) {
 		this();
 		// This order matters, don't rearrange it
 		setMapName(clone.getMapName());
 		setMapBounds(clone.getMapBounds());
-		setMap(clone.getMap());
+		setMap(x, y);
 		setLevelName(clone.getLevelName());
 		setLevelGrid(clone.getLevelGrid());
 	}
@@ -42,6 +42,14 @@ public class LocationComponent extends AbstractComponent {
 
 	public Vector2 getMap() {
 		return map;
+	}
+	
+	public int getMapX() {
+		return (int)map.x;
+	}
+	
+	public int getMapY() {
+		return (int)map.y;
 	}
 	
 	public Vector3 getMapAsLevel(Vector2 map) {
