@@ -12,13 +12,18 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.utils.Array;
 import com.cosmicrover.cassini.EntityFactory;
 import com.cosmicrover.cassini.WorldData;
+import com.cosmicrover.cassini.components.CameraComponent;
 import com.cosmicrover.cassini.components.LocationComponent;
 import com.cosmicrover.cassini.components.MapComponent;
+import com.cosmicrover.cassini.components.PropertyComponent;
+import com.cosmicrover.cassini.managers.PropertyManager;
 import com.cosmicrover.core.GameManager;
 
 public class MapSystem extends EntityProcessingSystem {
+	@Mapper ComponentMapper<CameraComponent> cameraMapper;
 	@Mapper ComponentMapper<LocationComponent> locationMapper;
 	@Mapper ComponentMapper<MapComponent> mapMapper;
+	@Mapper ComponentMapper<PropertyComponent> propertyMapper;
 
 	/// Layer properties that might exist
 	private static final String LAYER_PROPERTY_ITEMS      = "items";
@@ -28,13 +33,13 @@ public class MapSystem extends EntityProcessingSystem {
 	private final GameManager gameManager;
 	
 	private final WorldData worldData;
-
+	
 	// Indicates the parent screen needs to show a loading screen
 	private boolean loadingRequired = false;
 	
 	@SuppressWarnings("unchecked")
 	public MapSystem(GameManager gameManager) {
-		super(Aspect.getAspectForAll(LocationComponent.class, MapComponent.class));
+		super(Aspect.getAspectForAll(LocationComponent.class, MapComponent.class, PropertyComponent.class));
 		this.gameManager = gameManager;
 
 		// Retrieve a copy of our WorldData object from our GameManager
@@ -45,6 +50,7 @@ public class MapSystem extends EntityProcessingSystem {
 		return loadingRequired;
 	}
 	
+
 	@Override
 	protected void process(Entity theEntity) {
 		// Clear our loading required flag
@@ -83,8 +89,6 @@ public class MapSystem extends EntityProcessingSystem {
 				location.setMapBounds(0,0,map.mapWidth, map.mapHeight);
 				location.setMapName(map.mapFilename);
 				
-				// TODO: Determine the correct location to be on the map (load base?)
-
 				// Call our GetLayers method to determine which layers are foreground layers and background layers
 				getLayerTypes(map);
 				
@@ -92,7 +96,7 @@ public class MapSystem extends EntityProcessingSystem {
 				createWorldMapEntities(map, location);
 
 				// Create player specific entities for this map for this player
-				createPlayerMapEntities(map, location, theEntity.getUuid().toString());
+				createPlayerMapEntities(theEntity);
 			}
 		}
 	}
@@ -100,10 +104,11 @@ public class MapSystem extends EntityProcessingSystem {
 	private void createWorldMapEntities(MapComponent map, LocationComponent location) {
 		// Only create world entities for this map if this is the first time we have seen the map
 		if(!worldData.mapsLoaded.contains(map.mapFilename, false)) {
-			// TODO: Loop through each layer looking for items property
+			// Loop through each layer looking for items property
 			for(MapLayer mapLayer : map.tiledMap.getLayers()) {
 				// Look for layers with the "items" property and add the items found on them
 				if("true".equalsIgnoreCase(mapLayer.getProperties().get(LAYER_PROPERTY_ITEMS, String.class)) ) {
+					// Create World Map items for this map
 					createWorldMapItems(mapLayer, location);
 				}
 			}
@@ -121,16 +126,33 @@ public class MapSystem extends EntityProcessingSystem {
 				if(cell != null) {
 					// Create a LocationComponent for this tile as a clone from the entity Location provided
 					LocationComponent locationItem = new LocationComponent(location, x, y);
-					// Now create the Entity for this item and add it to the world immediately
+					// Now create the Entity for this item and add it to the world
 					EntityFactory.createMapItem(world, locationItem, cell.getTile()).addToWorld();
 				}
 			}
 		}
 	}
 
-	private void createPlayerMapEntities(MapComponent map, LocationComponent location, String uuid) {
+	private void createPlayerMapEntities(Entity theEntity) {
+		MapComponent map = mapMapper.get(theEntity);
+
 		// Have we done this before for this player? then add player specific entities now
 		if(!map.mapsLoaded.contains(map.mapFilename, false)) {
+			LocationComponent location = locationMapper.get(theEntity);
+			PropertyComponent property = propertyMapper.get(theEntity);
+			
+			// Retrieve the base for this player using our TagManager
+			Entity anBase = world.getManager(PropertyManager.class).getEntityByTag(EntityFactory.BASE_TAG + property.playerId);
+			LocationComponent anBaseLocation = locationMapper.get(anBase);
+			// Assign our player to the same location as its base
+			location.setMap(anBaseLocation.getMap());
+			
+			// See if we have a camera component, if so position it at the base location too
+			CameraComponent camera = cameraMapper.getSafe(theEntity);
+			if(camera != null) {
+				camera.setWorldPosition(anBaseLocation.getLevel().x, anBaseLocation.getLevel().y);
+			}
+
 			// Create map mask entities for each map location to hide each square
 			for(int row=0; row<map.mapHeight; row++) {
 				for(int col=0; col<map.mapWidth; col++) {
@@ -140,7 +162,7 @@ public class MapSystem extends EntityProcessingSystem {
 					}
 					// Create a mask entity for this location
 					LocationComponent locationMask = new LocationComponent(location, col, row);
-					EntityFactory.createMapMask(world, locationMask, uuid).addToWorld();
+					EntityFactory.createMapMask(world, locationMask, theEntity.getUuid().toString()).addToWorld();
 				}
 			}
 			

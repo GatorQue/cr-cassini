@@ -6,7 +6,10 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.cosmicrover.core.components.AbstractComponent;
 
 public class PropertyComponent extends AbstractComponent {
+	public static final int PLAYER_ID_UNKNOWN = 0;
 	/// Tile properties that might exist
+	private static final String PROPERTY_PLAYER_ID   = "playerId";
+	private static final String PROPERTY_TILE_ID     = "tileId";
 	private static final String PROPERTY_ITEM_COLOR  = "itemcolor";
 	private static final String PROPERTY_ITEM_MASS   = "itemmass";
 	private static final String PROPERTY_ITEM_NAME   = "itemname";
@@ -14,9 +17,9 @@ public class PropertyComponent extends AbstractComponent {
 	private static final String PROPERTY_ITEM_SHAPE  = "itemshape";
 	private static final String PROPERTY_ITEM_SIZE   = "itemsize";
 	private static final String PROPERTY_ITEM_SOUND  = "itemsound";
-	private static final String PROPERTY_ITEM_TILEID = "tileId";
 	private static final String PROPERTY_ITEM_VOLUME = "itemvolume";
 	private static final String PROPERTY_ITEM_WORTH  = "itemworth";
+	private static final String PROPERTY_ITEM_TAG    = "itemtag";
 
 	public enum Type {
 		Unknown,
@@ -95,9 +98,11 @@ public class PropertyComponent extends AbstractComponent {
 	};
 
 	/// Defines the tileId in the tileset for which this sprite came from
+	public int       playerId = PLAYER_ID_UNKNOWN;
 	public int       tileId = 0;
 	public String    name;
 	public Type      type;
+	public String    tag;
 	public float     mass;
 	public float     volume;
 	public int       worth;
@@ -110,6 +115,7 @@ public class PropertyComponent extends AbstractComponent {
 	public PropertyComponent() {
 		tileId = 0;
 		name = "Unknown";
+		tag = "";
 		type = Type.Unknown;
 		mass = 0.0f;
 		volume = 0.0f;
@@ -131,8 +137,11 @@ public class PropertyComponent extends AbstractComponent {
 		// Retrieve the tiledId
 		this.tileId = tiledMapTile.getId();
 		
-		// Retrieve the name of the property
+		// Retrieve the item name
 		this.name = tiledMapTile.getProperties().get(PROPERTY_ITEM_NAME, String.class);
+		
+		// Retrieve the item group
+		this.tag = tiledMapTile.getProperties().get(PROPERTY_ITEM_TAG, String.class);
 		
 		// Retrieve each type using the valueOf method of each Enum class
 		try {
@@ -182,31 +191,35 @@ public class PropertyComponent extends AbstractComponent {
 	@Override
 	public void write(Json json) {
 		json.writeObjectStart(this.getClass().getName(), this.getClass(), this.getClass());
+		json.writeValue(PROPERTY_PLAYER_ID, playerId);
+    	json.writeValue(PROPERTY_TILE_ID, tileId);
     	json.writeValue(PROPERTY_ITEM_COLOR, color);
     	json.writeValue(PROPERTY_ITEM_MASS, mass);
     	json.writeValue(PROPERTY_ITEM_NAME, name);
+    	json.writeValue(PROPERTY_ITEM_TAG, tag);
     	json.writeValue(PROPERTY_ITEM_TYPE, type.name());
     	json.writeValue(PROPERTY_ITEM_SHAPE, shape.name());
     	json.writeValue(PROPERTY_ITEM_SIZE, size.name());
     	json.writeValue(PROPERTY_ITEM_SOUND, sound.name());
     	json.writeValue(PROPERTY_ITEM_VOLUME, volume);
     	json.writeValue(PROPERTY_ITEM_WORTH, worth);
-    	json.writeValue(PROPERTY_ITEM_TILEID, tileId);
     	json.writeObjectEnd();
 	}
 
 	@Override
 	public void read(Json json, JsonValue jsonData) {
-		tileId = json.readValue("tileId", Integer.class, jsonData);
+		playerId = json.readValue(PROPERTY_PLAYER_ID, Integer.class, jsonData);
+		tileId = json.readValue(PROPERTY_TILE_ID, Integer.class, jsonData);
 		color = json.readValue(PROPERTY_ITEM_COLOR, Color.class, jsonData);
 		mass = json.readValue(PROPERTY_ITEM_MASS, Float.class, jsonData);
 		name = json.readValue(PROPERTY_ITEM_NAME, String.class, jsonData);
+		tag = json.readValue(PROPERTY_ITEM_TAG, String.class, jsonData);
 		type = json.readValue(PROPERTY_ITEM_TYPE, Type.class, jsonData);
 		shape = json.readValue(PROPERTY_ITEM_SHAPE, Shape.class, jsonData);
 		size = json.readValue(PROPERTY_ITEM_SIZE, Size.class, jsonData);
 		sound = json.readValue(PROPERTY_ITEM_SOUND, Sound.class, jsonData);
 		volume = json.readValue(PROPERTY_ITEM_VOLUME, Float.class, jsonData);
 		worth = json.readValue(PROPERTY_ITEM_WORTH, Integer.class, jsonData);
-		tileId = json.readValue(PROPERTY_ITEM_TILEID, Integer.class, jsonData);
+		tileId = json.readValue(PROPERTY_TILE_ID, Integer.class, jsonData);
 	}
 }

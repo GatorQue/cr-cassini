@@ -7,12 +7,17 @@ import com.cosmicrover.cassini.components.CameraComponent;
 import com.cosmicrover.cassini.components.GroupComponent;
 import com.cosmicrover.cassini.components.OwnerComponent;
 import com.cosmicrover.cassini.components.PropertyComponent;
+import com.cosmicrover.cassini.components.PropertyComponent.Color;
+import com.cosmicrover.cassini.components.PropertyComponent.Shape;
+import com.cosmicrover.cassini.components.PropertyComponent.Size;
 import com.cosmicrover.cassini.components.RoverEventComponent;
 import com.cosmicrover.cassini.components.RoverInputComponent;
 import com.cosmicrover.cassini.components.LocationComponent;
 import com.cosmicrover.cassini.components.SpriteComponent;
 import com.cosmicrover.cassini.components.MapComponent;
 import com.cosmicrover.cassini.components.ViewportComponent;
+import com.cosmicrover.cassini.components.PropertyComponent.Type;
+import com.cosmicrover.cassini.managers.PropertyManager;
 
 public class EntityFactory {
 	// List of GroupManager groups
@@ -22,9 +27,9 @@ public class EntityFactory {
 	public static final String MASK_GROUP = "map_mask";
 	public static final String SPRITE_GROUP = "sprites";
 	public static final String WIDGET_GROUP = "widgets";
-	
+
 	// List of TagManager tags
-	//private static int playerCount = 0;
+	public static final String BASE_TAG = "BASE_";
 	public static final String PLAYER_TAG = "PLAYER_";
 	public static final String MOVE_INPUT_TAG = "MovePlayer";
 
@@ -37,9 +42,9 @@ public class EntityFactory {
 	public static final int ROVER_BACK_LEFT_WHEEL    = 6;
 	public static final int ROVER_BACK_RIGHT_WHEEL   = 7;
 
-	public static Entity createLocalPlayer(World world) {
+	public static Entity createLocalPlayer(World world, int playerId) {
 		// Use our private method to create this player object
-		Entity anEntity = createPlayer(world);
+		Entity anEntity = createPlayer(world, playerId);
 		
 		// Retrieve the Group component and add a custom group for this remote player
 		GroupComponent group = anEntity.getComponent(GroupComponent.class);
@@ -49,9 +54,9 @@ public class EntityFactory {
 		return anEntity;
 	}
 	
-	public static Entity createRemotePlayer(World world) {
+	public static Entity createRemotePlayer(World world, int playerId) {
 		// Use our private method to create this player object
-		Entity anEntity = createPlayer(world);
+		Entity anEntity = createPlayer(world, playerId);
 		
 		// Retrieve the Group component and add a custom group for this remote player
 		GroupComponent group = anEntity.getComponent(GroupComponent.class);
@@ -61,7 +66,7 @@ public class EntityFactory {
 		return anEntity;
 	}
 	
-	private static Entity createPlayer(World world) {
+	private static Entity createPlayer(World world, int playerId) {
 		// Create a new Entity for this player
 		Entity anEntity = world.createEntity();
 		
@@ -110,15 +115,31 @@ public class EntityFactory {
 		//health.add(ROVER_BACK_RIGHT_WHEEL);
 		//anEntity.addComponent(health);
 		
-		// Add a unique player tag for this player
-		//world.getManager(TagManager.class).register(PLAYER_TAG + ++playerCount, anEntity);
-
 		// Add Group component to keep track of this entity as a batch
 		GroupComponent group = new GroupComponent();
 		group.add(SPRITE_GROUP);
 		anEntity.addComponent(group);
 		
-		//e.addComponent(new Player());
+		// Add Property component for this item
+		PropertyComponent property = new PropertyComponent();
+		property.playerId = playerId;
+		property.name = PLAYER_TAG + playerId; // TODO: We should let the player name their rover
+		property.type = Type.Rover;
+		property.color = Color.Gray;
+		property.mass = 1000.0f;
+		property.volume = 1000.0f;
+		property.shape = Shape.Rectangular;
+		property.size = Size.Large;
+		property.tag = PLAYER_TAG + playerId;
+		property.tileId = 0; // TODO: We should have rover images be part of the tileset_items
+		property.worth = 0; // You can't pick up a rover, but you can collect items inside it
+		anEntity.addComponent(property);
+	
+		// Add this entity to TagManager if its property has a tag
+		if(property.tag != null && property.tag.length() > 0) {
+			world.getManager(PropertyManager.class).addTag(anEntity, property.tag);
+		}
+		
 		return anEntity;
 	}
 	
@@ -141,6 +162,11 @@ public class EntityFactory {
 		// Add Property component for this item
 		PropertyComponent property = new PropertyComponent(tiledMapTile);
 		anEntity.addComponent(property);
+	
+		// Add this entity to TagManager if its property has a tag
+		if(property.tag != null && property.tag.length() > 0) {
+			world.getManager(PropertyManager.class).addTag(anEntity, property.tag);
+		}
 		
 		return anEntity;
 	}

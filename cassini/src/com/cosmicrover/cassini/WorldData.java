@@ -20,6 +20,7 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.cosmicrover.cassini.managers.GroupManager;
 import com.cosmicrover.cassini.managers.OwnerManager;
 import com.cosmicrover.cassini.managers.PersistenceManager;
+import com.cosmicrover.cassini.managers.PropertyManager;
 import com.cosmicrover.cassini.managers.ViewportManager;
 import com.cosmicrover.cassini.screens.MainMenuScreen;
 import com.cosmicrover.cassini.screens.PlanetMapScreen;
@@ -107,6 +108,7 @@ public class WorldData extends GameData {
 		world.setManager(new GroupManager());
 		world.setManager(new OwnerManager());
 		world.setManager(new PersistenceManager());
+		world.setManager(new PropertyManager());
 		world.setManager(new ViewportManager());
 		
 		//world.setManager(new GridZoneManager(tileWidth, tileHeight));
@@ -152,15 +154,15 @@ public class WorldData extends GameData {
 		entities.clear();
 
 		// Create entities for a new game
-    	entities.add(EntityFactory.createLocalPlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
-		//entities.add(EntityFactory.createRemotePlayer(world));
+    	entities.add(EntityFactory.createLocalPlayer(world, 1));
+		//entities.add(EntityFactory.createRemotePlayer(world, 2));
+		//entities.add(EntityFactory.createRemotePlayer(world, 3));
+		//entities.add(EntityFactory.createRemotePlayer(world, 4));
+		//entities.add(EntityFactory.createRemotePlayer(world, 5));
+		//entities.add(EntityFactory.createRemotePlayer(world, 6));
+		//entities.add(EntityFactory.createRemotePlayer(world, 7));
+		//entities.add(EntityFactory.createRemotePlayer(world, 8));
+		//entities.add(EntityFactory.createRemotePlayer(world, 9));
 
     	// Call our restoreGame method to make these entities active
     	restoreGame();
